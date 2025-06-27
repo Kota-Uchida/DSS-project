@@ -48,4 +48,4 @@ def plot_keyword_clouds_by_cluster(csv_path, cluster_column="cluster", keyword_c
         plt.close()
 
 if __name__ == "__main__":
-    plot_keyword_clouds_by_cluster("../../data/lyrics/popular_songs_analysis_results.csv")
+    plot_keyword_clouds_by_cluster("../../data/songs/popular_songs_analysis_results.csv")

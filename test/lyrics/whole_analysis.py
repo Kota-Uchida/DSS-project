@@ -11,7 +11,8 @@ import os
 
 def whole_analysis_from_csv(csv_path):
     df = pd.read_csv(csv_path)
-    cluster_from_csv(df, n_clusters=4)
+    # cluster_from_csv(df, n_clusters=4)
+    cluster_with_optimal_k(df, k_range=(2, 10))
     tsne_from_csv(df)
     return df
 
@@ -41,6 +42,65 @@ def cluster_from_csv(df, n_clusters=4):
     plt.tight_layout()
     os.makedirs("figures", exist_ok=True)
     plt.savefig("figures/cluster_plot_songs.png")
+    return df
+
+def cluster_with_optimal_k(df, k_range=(2, 10)):
+    feature_cols = [
+        "token_count", "type_count", "type_token_ratio",
+        "ratio_名詞", "ratio_動詞", "ratio_形容詞", "ratio_副詞"
+    ]
+    X = df[feature_cols].fillna(0)
+    X_scaled = StandardScaler().fit_transform(X)
+
+    sse = []
+    sil_scores = []
+    k_values = list(range(k_range[0], k_range[1]+1))
+
+    for k in k_values:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        labels = kmeans.fit_predict(X_scaled)
+        sse.append(kmeans.inertia_)
+        sil = silhouette_score(X_scaled, labels)
+        sil_scores.append(sil)
+
+    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+
+    ax[0].plot(k_values, sse, marker='o')
+    ax[0].set_title("Elbow method（SSE）")
+    ax[0].set_xlabel("Number of Clusters (k)")
+    ax[0].set_ylabel("SSE (Sum of Squared Errors)")
+
+    ax[1].plot(k_values, sil_scores, marker='o', color="green")
+    ax[1].set_title("Silhouette score")
+    ax[1].set_xlabel("Number of Clusters (k)")
+    ax[1].set_ylabel("Score（-1〜1）")
+
+    plt.tight_layout()
+    plt.show()
+
+    best_k = k_values[sil_scores.index(max(sil_scores))]
+    print(f"Estimated number of optial cluster: {best_k}")
+
+    kmeans = KMeans(n_clusters=best_k, random_state=42)
+    df["cluster"] = kmeans.fit_predict(X_scaled)
+
+    pca = PCA(n_components=2)
+    components = pca.fit_transform(X_scaled)
+    df["pc1"] = components[:, 0]
+    df["pc2"] = components[:, 1]
+
+    plt.figure(figsize=(8, 6))
+    for cluster_id in sorted(df["cluster"].unique()):
+        subset = df[df["cluster"] == cluster_id]
+        plt.scatter(subset["pc1"], subset["pc2"], label=f"Cluster {cluster_id}", alpha=0.7)
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("Semantic Clustering with Optimal k")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("figures/cluster_optimal_k.png")
+
     return df
 
 def tsne_from_csv(df, perplexity=30, random_state=42):
@@ -78,5 +138,5 @@ def tsne_from_csv(df, perplexity=30, random_state=42):
     return df
 
 if __name__ == "__main__":
-    result_df = whole_analysis_from_csv("../../data/lyrics/popular_songs_all.csv")
-    result_df.to_csv("../../data/lyrics/popular_songs_analysis_results.csv", index=False)
+    result_df = whole_analysis_from_csv("../../data/songs/popular_songs_results.csv")
+    result_df.to_csv("../../data/songs/popular_songs_analysis_results.csv", index=False)

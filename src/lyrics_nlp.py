@@ -58,6 +58,8 @@ class LyricsNLP:
                 continue
             if len(lemma) < 2:
                 continue
+            if re.fullmatch(r"[A-Za-z0-9]+", lemma):
+                continue
             clean.append(lemma)
         return clean
 
@@ -103,10 +105,25 @@ class LyricsNLP:
             **{f"ratio_{pos}": round(count / total, 4) for pos, count in pos_counts.items()}
         }
 
-def analyze_lyrics_csv(csv_path, stopwords_path="stopwords.txt", output_path="../data/lyrics/lyrics_results.csv", top_k=20):
+
+def analyze_lyrics_csv(csv_path, stopwords_path="stopwords.txt", output_path="../data/song/popular_songs_results.csv", top_k=20, num_topics=5):
     nlp = LyricsNLP(stopwords_path=stopwords_path)
     df = pd.read_csv(csv_path)
     results = []
+    year_topics_dict = {}
+    for year, group in df.groupby("year"):
+        lyrics_list = [str(row['lyrics']) for _, row in group.iterrows() if pd.notna(row['lyrics']) and str(row['lyrics']).strip()]
+        docs = []
+        for lyrics in lyrics_list:
+            tokens = nlp.safe_tokenize(lyrics)
+            clean_tokens = nlp.remove_stopwords(tokens)
+            docs.append(" ".join(clean_tokens))
+        if docs:
+            topics = nlp.estimate_topics(docs, num_topics=num_topics)
+            # トピック語リストをカンマ区切りで連結し、topic0, topic1...のカラムを作る
+            year_topics_dict[year] = {f"topic_{topic_id}": ", ".join(words) for topic_id, words in topics.items()}
+
+
     for idx, row in df.iterrows():
         # popular_songs_all.csvのカラム: year, title, artist, lyrics
         lyrics = str(row['lyrics']) if pd.notna(row['lyrics']) else ""
@@ -116,10 +133,15 @@ def analyze_lyrics_csv(csv_path, stopwords_path="stopwords.txt", output_path="..
         clean_tokens = nlp.remove_stopwords(tokens)
         keywords = nlp.extract_keywords(clean_tokens, top_n=top_k)
         metrics = nlp.compute_style_metrics(tokens)
+        token_count = len(clean_tokens)
+        type_count = len(set(clean_tokens))
+        year = row.get("year", "")
         result = {
-            "year": row.get("year", ""),
+            "year": year,
             "title": row.get("title", ""),
             "artist": row.get("artist", ""),
+            "token_count": token_count,
+            "type_count": type_count,
             "type_token_ratio": metrics.get("type_token_ratio", 0),
             "avg_sentence_length": metrics.get("avg_sentence_length", 0),
             "avg_commas_per_sentence": metrics.get("avg_commas_per_sentence", 0),
@@ -128,12 +150,17 @@ def analyze_lyrics_csv(csv_path, stopwords_path="stopwords.txt", output_path="..
             "ratio_動詞": metrics.get("ratio_動詞", 0),
             "ratio_形容詞": metrics.get("ratio_形容詞", 0),
             "ratio_副詞": metrics.get("ratio_副詞", 0),
-            "keywords": ", ".join(keywords)
+            "keywords": ", ".join(keywords),
         }
+        if year in year_topics_dict:
+            result.update(year_topics_dict[year])
+        else:
+            for topic_id in range(num_topics):
+                result[f"topic_{topic_id}"] = ""
         results.append(result)
     out_df = pd.DataFrame(results)
     out_df.to_csv(output_path, index=False, encoding="utf-8-sig")
     print(f"Analysis completed: {output_path}")
 
 if __name__ == "__main__":
-    analyze_lyrics_csv("../data/lyrics/popular_songs_all.csv", stopwords_path="stopwords.txt", output_path="../data/lyrics/lyrics_results.csv", top_k=20)
+    analyze_lyrics_csv("../data/songs/popular_songs_all.csv", stopwords_path="stopwords.txt", output_path="../data/songs/popular_songs_results.csv", top_k=20, num_topics=5)
