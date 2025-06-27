@@ -11,7 +11,7 @@ import os
 
 def whole_analysis_from_csv(csv_path):
     df = pd.read_csv(csv_path)
-    cluster_from_csv(df, n_clusters=4)
+    cluster_from_csv(df, n_clusters=3)
     # cluster_with_optimal_k(df)
     tsne_from_csv(df)
     structure_analysis(df)
