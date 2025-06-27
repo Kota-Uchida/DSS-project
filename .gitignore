@@ -1,1 +1,10 @@
 .venv/
+data/aozora/
+data/aozora_cleaned/
+data/lyrics/
+data/songs/
+data/wiki/
+test/aozora/aozora_analysis_results.csv
+test/aozora/aozora_resukts.csv
+test/aozora/clustered_results.csv
+test/aozora/tsne_results.csv
