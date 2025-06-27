@@ -1,0 +1,23 @@
+# DATA LICENSE / External Data Notice
+
+This repository contains data obtained from the following sources:
+
+---
+
+## Aozora Bunko (青空文庫)
+
+- 青空文庫 URL: https://www.aozora.gr.jp/
+- The texts from Aozora Bunko are either public domain works or provided under Aozora Bunko's own guidelines.
+- Please refer to Aozora Bunko’s 利用規約 (https://www.aozora.gr.jp/guide/kijyunn.html) for conditions of use.
+- When redistributing or using these texts, be sure to credit Aozora Bunko and the original authors, inputters, and proofreaders as listed in each text's metadata.
+
+
+---
+
+## Notes
+
+- The software code in this repository is licensed under MIT License.
+- This DATA_LICENSE.md applies only to external data included in the repository.
+- This repository may contain metadata (e.g. song titles, artist names) extracted from public sources. No lyrics or copyrighted textual works are included.
+- Please refer to the terms of use of each original source website before reusing any data.
+
