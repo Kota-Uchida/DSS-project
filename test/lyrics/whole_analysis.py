@@ -106,7 +106,7 @@ def cluster_with_optimal_k(df, k_range=(2, 10)):
 def tsne_from_csv(df, perplexity=30, random_state=42):
     plt.rcParams['font.family'] = 'IPAexGothic'  
     feature_cols = [
-        "type_token_ratio",
+        "token_count", "type_count", "type_token_ratio",
         "ratio_名詞", "ratio_動詞", "ratio_形容詞", "ratio_副詞"
     ]
     X = df[feature_cols].fillna(0)
